@@ -1,36 +1,41 @@
-# API → CSV Sync
+# API → CSV Data Sync (Python Automation)
 
-Python-скрипт для идемпотентной синхронизации данных REST API с CSV-файлом.
-Оптимизирован для запуска через cron с корректными exit-кодами.
+Production-ready Python script for idempotent synchronization of REST API data into a CSV file.  
+Designed for scheduled execution (cron / Windows Task Scheduler) with robust error handling and logging.
 
-## Возможности
-- CLI-параметры для API URL и пути CSV
-- Идемпотентная синхронизация по ID
-- Обновление и добавление записей
-- Отдельная обработка сетевых ошибок
-- Валидация структуры API-ответа
-- Детальное логирование
+---
 
-## Использование
+## 🔍 Use Case
 
-Пример ручного запуска:
+This tool is used when API data must be regularly exported or mirrored into CSV for:
+- reporting
+- analytics
+- backups
+- integrations with legacy systems
 
-python api_to_csv_sync.py --api-url https://jsonplaceholder.typicode.com/posts --csv-path data.csv
+The script guarantees **no duplicates**, **safe re-runs**, and **clear failure signals** for automation tools.
 
-## Cron
+---
 
-Каждые 10 минут:
+## ✨ Features
 
-*/10 * * * * /usr/bin/python3 /path/api_to_csv_sync.py --api-url https://jsonplaceholder.typicode.com/posts --csv-path /path/data.csv
+- REST API → CSV synchronization
+- Idempotent updates based on unique ID
+- Automatic retries with backoff on network errors
+- Strict API response validation
+- CLI interface for automation pipelines
+- Structured logging to file and stdout
+- Meaningful exit codes for cron / schedulers
+- Optional dry-run mode (no file writes)
+- Optional record limit for testing
 
-## Exit codes
+---
 
-- 0 — успех
-- 1 — общая ошибка
-- 2 — ошибка API
-- 3 — ошибка структуры данных
-- 4 — ошибка чтения/записи файлов
+## ⚙️ Requirements
 
-## Требования
 - Python 3.9+
 - requests
+
+Install dependencies:
+```bash
+pip install requests
