@@ -15,13 +15,13 @@ Python-скрипт для идемпотентной синхронизации
 
 Пример ручного запуска:
 
-python api_to_csv_sync.py --api-url https://api.example.com/v1/items --csv-path data.csv
+python api_to_csv_sync.py --api-url https://jsonplaceholder.typicode.com/posts --csv-path data.csv
 
 ## Cron
 
 Каждые 10 минут:
 
-*/10 * * * * /usr/bin/python3 /path/api_to_csv_sync.py --api-url https://api.example.com/v1/items --csv-path /path/data.csv
+*/10 * * * * /usr/bin/python3 /path/api_to_csv_sync.py --api-url https://jsonplaceholder.typicode.com/posts --csv-path /path/data.csv
 
 ## Exit codes
 
