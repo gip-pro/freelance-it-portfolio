@@ -1,0 +1,43 @@
+sites:
+  - name: example_site
+    base_url: https://example.com
+    start_urls:
+      - https://example.com/rentals
+    selectors:
+      category_card_links: "div.card a.card-link"
+      pagination_next: "a.next, a[rel='next']"
+      listing:
+        title: "h1"
+        price: ".price"
+        address:
+          - ".address"
+          - ".location"
+          - "[itemprop='address']"
+        owner_profile: "a.owner-profile"
+      owner_profile:
+        name: "h1"
+        phone: ".phone"
+        email: ".email"
+    rate_limit_per_minute: 6
+    delay_min_seconds: 5
+    delay_max_seconds: 15
+
+output:
+  csv_path: output/listings.csv
+  encoding: utf-8
+  batch_state_size: 20
+
+geocoding:
+  enabled: true
+  provider: nominatim
+  user_agent: rental-scraper/1.0
+  rate_limit_per_minute: 1
+  cache_file: output/geocode_cache.json
+
+resume:
+  enabled: true
+  state_file: output/state.json
+
+test_mode:
+  enabled: false
+  limit: 50
