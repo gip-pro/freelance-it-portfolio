@@ -1,4 +1,5 @@
 import logging
+import os
 from typing import List
 
 from telegram import (
@@ -13,7 +14,8 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = "7976004740:AAGmsM6AZRhiNX8fTnOPIeHelJwDw4ifhPE"
+TOKEN = os.getenv("7976004740:AAGmsM6AZRhiNX8fTnOPIeHelJwDw4ifhPE")
+
 
 MAX_MAIN = 12
 MAX_RESERVE = 2
