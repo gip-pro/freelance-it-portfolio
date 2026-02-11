@@ -213,7 +213,7 @@ def main():
     app.run_webhook(
         listen="0.0.0.0",
         port=int(os.environ.get("PORT", 8000)),
-        webhook_url=os.getenv("RAILWAY_STATIC_URL")
+        webhook_url=f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}"
     )
 
 if __name__ == "__main__":
