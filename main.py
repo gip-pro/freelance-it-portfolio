@@ -14,7 +14,7 @@ from telegram.ext import (
     ContextTypes,
 )
 
-TOKEN = os.getenv("7976004740:AAGmsM6AZRhiNX8fTnOPIeHelJwDw4ifhPE")
+TOKEN = os.getenv("BOT_TOKEN")
 
 
 MAX_MAIN = 12
