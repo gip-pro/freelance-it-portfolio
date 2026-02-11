@@ -218,6 +218,7 @@ def main():
         port=port,
         webhook_url=f"https://{domain}/telegram",
         webhook_path="/telegram"
+    )
 
 if __name__ == "__main__":
     main()
