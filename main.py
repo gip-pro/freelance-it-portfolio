@@ -1,5 +1,6 @@
 import logging
 import os
+import json
 from typing import List
 
 from telegram import (
@@ -16,37 +17,46 @@ from telegram.ext import (
 
 TOKEN = os.getenv("BOT_TOKEN")
 
-
 MAX_MAIN = 12
 MAX_RESERVE = 2
+STATE_FILE = "state.json"
 
 logging.basicConfig(
     format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
     level=logging.INFO,
 )
 
-state = {
-    "active": False,
-    "phase": "main",  # main | reserve | finished
-    "main": [],
-    "reserve": [],
-    "message_id": None,
-    "chat_id": None,
-}
+# ================= STATE =================
 
+def load_state():
+    if os.path.exists(STATE_FILE):
+        with open(STATE_FILE, "r") as f:
+            return json.load(f)
+    return {
+        "active": False,
+        "phase": "main",
+        "main": [],
+        "reserve": [],
+        "message_id": None,
+        "chat_id": None,
+    }
 
-# ================= ADMIN CHECK =================
+def save_state():
+    with open(STATE_FILE, "w") as f:
+        json.dump(state, f)
+
+state = load_state()
+
+# ================= ADMIN =================
+
 async def is_admin(update: Update, context: ContextTypes.DEFAULT_TYPE) -> bool:
-    if not update.effective_chat or not update.effective_user:
-        return False
-
     member = await context.bot.get_chat_member(
         update.effective_chat.id, update.effective_user.id
     )
     return member.status in ("administrator", "creator")
 
-
 # ================= KEYBOARD =================
+
 def build_keyboard(user_id: int) -> InlineKeyboardMarkup:
     if state["phase"] == "main":
         if user_id in state["main"]:
@@ -68,8 +78,8 @@ def build_keyboard(user_id: int) -> InlineKeyboardMarkup:
 
     return InlineKeyboardMarkup([])
 
-
 # ================= RENDER =================
+
 async def render_list(context: ContextTypes.DEFAULT_TYPE) -> str:
     async def names(ids: List[int]) -> List[str]:
         result = []
@@ -103,16 +113,10 @@ async def render_list(context: ContextTypes.DEFAULT_TYPE) -> str:
 
     return text
 
-
 # ================= COMMANDS =================
+
 async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, context):
-        return
-
-    if state["active"]:
-        await update.message.reply_text(
-            "⚽ Процесс уже запущен.\nProcess already started."
-        )
         return
 
     state["active"] = True
@@ -131,6 +135,14 @@ async def start(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     state["message_id"] = msg.message_id
 
+    # 📌 Автозакреп
+    await context.bot.pin_chat_message(
+        state["chat_id"],
+        state["message_id"],
+        disable_notification=True
+    )
+
+    save_state()
 
 async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not await is_admin(update, context):
@@ -138,33 +150,14 @@ async def stop(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
     state["active"] = False
     state["phase"] = "finished"
+    save_state()
 
     await update.message.reply_text(
-        "🛑 Процесс остановлен администратором.\nProcess stopped by administrator."
+        "🛑 Процесс остановлен.\nProcess stopped."
     )
 
+# ================= BUTTON =================
 
-async def help_command(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        "⚽ Команды / Commands:\n"
-        "/start — запустить набор / start process\n"
-        "/stop — остановить / stop process\n"
-        "/status — текущий статус / current status\n"
-    )
-    await update.message.reply_text(text)
-
-
-async def status(update: Update, context: ContextTypes.DEFAULT_TYPE):
-    text = (
-        f"⚽ Активен / Active: {state['active']}\n"
-        f"Фаза / Phase: {state['phase']}\n"
-        f"Основной / Main: {len(state['main'])}/{MAX_MAIN}\n"
-        f"Замена / Reserve: {len(state['reserve'])}/{MAX_RESERVE}"
-    )
-    await update.message.reply_text(text)
-
-
-# ================= BUTTON HANDLER =================
 async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
     if not state["active"]:
         return
@@ -180,10 +173,6 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if len(state["main"]) == MAX_MAIN:
             state["phase"] = "reserve"
-            await context.bot.send_message(
-                state["chat_id"],
-                "⚽ Основной состав сформирован.\nMain squad completed."
-            )
 
     elif query.data == "leave_main":
         if user_id in state["main"]:
@@ -195,14 +184,12 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
 
         if len(state["reserve"]) == MAX_RESERVE:
             state["phase"] = "finished"
-            await context.bot.send_message(
-                state["chat_id"],
-                "🥅 Список замены сформирован.\nReserve list completed."
-            )
 
     elif query.data == "leave_reserve":
         if user_id in state["reserve"]:
             state["reserve"].remove(user_id)
+
+    save_state()
 
     text = await render_list(context)
 
@@ -214,19 +201,20 @@ async def on_button(update: Update, context: ContextTypes.DEFAULT_TYPE):
         parse_mode="Markdown",
     )
 
-
 # ================= MAIN =================
+
 def main():
     app = Application.builder().token(TOKEN).build()
 
     app.add_handler(CommandHandler("start", start))
     app.add_handler(CommandHandler("stop", stop))
-    app.add_handler(CommandHandler("help", help_command))
-    app.add_handler(CommandHandler("status", status))
     app.add_handler(CallbackQueryHandler(on_button))
 
-    app.run_polling()
-
+    app.run_webhook(
+        listen="0.0.0.0",
+        port=int(os.environ.get("PORT", 8000)),
+        webhook_url=os.getenv("RAILWAY_STATIC_URL")
+    )
 
 if __name__ == "__main__":
     main()
