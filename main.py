@@ -210,11 +210,14 @@ def main():
     app.add_handler(CommandHandler("stop", stop))
     app.add_handler(CallbackQueryHandler(on_button))
 
+    domain = os.environ.get("RAILWAY_PUBLIC_DOMAIN")
+    port = int(os.environ.get("PORT", 8000))
+
     app.run_webhook(
         listen="0.0.0.0",
-        port=int(os.environ.get("PORT", 8000)),
-        webhook_url=f"https://{os.environ.get('RAILWAY_PUBLIC_DOMAIN')}"
-    )
+        port=port,
+        webhook_url=f"https://{domain}/telegram",
+        webhook_path="/telegram"
 
 if __name__ == "__main__":
     main()
