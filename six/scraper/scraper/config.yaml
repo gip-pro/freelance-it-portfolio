@@ -1,0 +1,43 @@
+sites:
+  - name: craigslist_nyc_sublets
+    base_url: https://newyork.craigslist.org
+    start_urls:
+      - https://newyork.craigslist.org/search/sub
+
+    selectors:
+      category_card_links: "a.result-title"
+      pagination_next: "a.button.next"
+
+      listing:
+        title: "span#titletextonly"
+        price: "span.price"
+        address:
+          - "div.mapaddress"
+          - "span.postingtitletext small"
+          - "div.postingtitletext small"
+        owner_phone: "p.reply-tel-number span.reply-bold"
+        owner_email: "a.mailapp"
+
+    rate_limit_per_minute: 10
+    delay_min_seconds: 1
+    delay_max_seconds: 2
+
+output:
+  csv_path: output/craigslist_sublets_nyc.csv
+  encoding: utf-8
+  batch_state_size: 10
+
+geocoding:
+  enabled: false
+  provider: nominatim
+  user_agent: rental-scraper/1.0
+  rate_limit_per_minute: 1
+  cache_file: output/geocode_cache.json
+
+resume:
+  enabled: true
+  state_file: output/state.json
+
+test_mode:
+  enabled: true
+  limit: 5
